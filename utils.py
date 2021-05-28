@@ -21,7 +21,7 @@ def get_args():
     parser.add_argument('--decoder_layer_num', type=int, default=6)
     parser.add_argument('--src_lang', type=str, default='de')
     parser.add_argument('--tgt_lang', type=str, default='en')
-    parser.add_argument('--data_bin', type=str, default='../dataset/bin')
+    parser.add_argument('--data_bin', type=str, default='./dataset/bin')
     parser.add_argument('--batch_size', type=int, default=30)
     parser.add_argument('--epoch', type=int, default=1000)
     args = parser.parse_args()

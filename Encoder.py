@@ -1,6 +1,6 @@
 from MultiHeadAttention import MultiHeadAttention
 from torch import Tensor
-from torch.nn import Module, LayerNorm, ModuleList, Embedding,TransformerEncoderLayer
+from torch.nn import Module, LayerNorm, ModuleList, Embedding
 from FeedForward import FeedForward
 from utils import Positional_Encoding
 import math
@@ -21,8 +21,8 @@ class EncoderLayer(Module):
         super().__init__()
         self.MultiHead = MultiHeadAttention(num_heads, hidden_size, dropout)
         self.FeedForward = FeedForward(hidden_size, feedward, dropout)
-        self.LayerNorm1 = LayerNorm(hidden_size)
-        self.LayerNorm2 = LayerNorm(hidden_size)
+        self.LayerNorm1 = LayerNorm(hidden_size, eps=1e-6)
+        self.LayerNorm2 = LayerNorm(hidden_size, eps=1e-6)
 
     def forward(self, input_feature: Tensor, mask: Tensor) -> Tensor:
         """
@@ -31,12 +31,10 @@ class EncoderLayer(Module):
         :param mask: attention mask,shape(bzx,seq_len,hidden_dim)
         :return: shape:(bzs,seq_len,hidden_dim)
         """
-        features = self.MultiHead(input_feature, input_feature, input_feature,key_padding_mask= mask)
-        features1=features+input_feature
-        features = self.LayerNorm1(features1)
+        features = self.MultiHead(input_feature, input_feature, input_feature, mask)
+        features = self.LayerNorm1(features + input_feature)
         output = self.FeedForward(features)
-        output1=output+features
-        output = self.LayerNorm2(output1)
+        output = self.LayerNorm2(features + output)
         return output
 
 
@@ -52,14 +50,13 @@ class Encoder(Module):
         :param vocab_size: num of word in source language
         :param num_encoder_layer:  number of encoder layer
         :param hidden_size: the hidden size/ embedding size for single word
-        :param num_head: the number of multi-head
+        :param num_head: the number of multihead
         :param feedward: hidden dimension for feedback
         """
         super().__init__()
         self.Encoder_layers = ModuleList()
         for i in range(num_encoder_layer):
             self.Encoder_layers.append(EncoderLayer(hidden_size, num_head, feedward, dropout))
-            #self.Encoder_layers.append(TransformerEncoderLayer(d_model=hidden_size,nhead=8,dim_feedforward=2048))
         self.Embedding = Embedding(vocab_size, hidden_size, padding_idx=0)
         self.Positional_Encoding = Positional_Encoding(hidden_size, 512, device)
         self.d_model = hidden_size
@@ -67,13 +64,10 @@ class Encoder(Module):
     def forward(self, input_features, input_mask):
         features = self.Positional_Encoding(self.Embedding(input_features))
         for layer in self.Encoder_layers:
-            features = layer(features,input_mask)
+            features = layer(features, input_mask)
         return features
-
-
-if __name__ == '__main__':
+if __name__=='__main__':
     import torch
-
-    Encoder_layer = EncoderLayer(512, 8, 2048, 0)
-    output = Encoder_layer(torch.randn(64, 43, 512), mask=None)
+    Encoder_layer=EncoderLayer(512,8,2048,0)
+    output=Encoder_layer(torch.randn(64,43,512),mask=None)
     print(output.shape)

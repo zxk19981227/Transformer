@@ -3,7 +3,6 @@ from numpy import mean
 from Model import Transformer
 from utils import Optim, get_args, cal_loss, cal_accruacy, collate_fn
 from torch.utils.data import DataLoader
-# from torch.nn import Transformer
 import torch
 from dataload import Dataload
 import pickle
@@ -13,6 +12,7 @@ import fitlog
 import numpy as np
 import random
 fitlog.set_log_dir('./logs')
+
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -20,14 +20,13 @@ def setup_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
 setup_seed(1)
-
 def train_step(src, trg, model, optim, device):
     optim.zero_grad()
     src = src.to(device)
     trg = trg.to(device)
     trg_input = trg[:, :-1]
     trg_label = trg[:, 1:]
-    predict = model.forward(src, trg_input)
+    predict = model(src, trg_input)
     loss = cal_loss(predict, trg_label)
     loss.backward()
     optim.step()
@@ -61,7 +60,7 @@ def eval_step(src, trg, model, device):
     trg = trg.to(device)
     trg_input = trg[:, :-1]
     trg_label = trg[:, 1:]
-    predict = model.forward(src, trg_input)
+    predict = model(src, trg_input)
     loss = cal_loss(predict, trg_label)
     correct, total = cal_accruacy(predict, trg_label)
     return loss.item(), total, correct
@@ -112,9 +111,9 @@ def main():
                               batch_size=args.batch_size, collate_fn=collate_fn)
     best_loss = 1e4
     model = model.to(device)
-    # model.load_state_dict(torch.load('best_model.pkl'))
+    model.load_state_dict(torch.load('/home/hejun/zxk/transformer/source/best_model.pkl'))
     for i in range(args.epoch):
-        train(i, model, data_loader=train_loader, optim=optim, device=device)
+        # train(i, model, data_loader=train_loader, optim=optim, device=device)
         with torch.no_grad():
             best_loss = eval(i, model, valid_loader, best_loss, device)
     # torch.save(model.state_dict(), 'best_model.pkl')

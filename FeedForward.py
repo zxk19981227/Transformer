@@ -1,5 +1,4 @@
-from torch.nn import Linear,Module,Dropout
-from torch.nn.functional import relu
+from torch.nn import Linear,Module,ReLU,Dropout
 from torch import Tensor
 class FeedForward(Module):
     def __init__(self,input_dim:int,inner_dim:int,dropout:float):
@@ -10,7 +9,7 @@ class FeedForward(Module):
         """
         super(FeedForward, self).__init__()
         self.input_linear=Linear(input_dim,inner_dim)
-        self.relu=relu
+        self.relu=ReLU()
         self.dropout=Dropout(dropout)
         self.output_linear=Linear(inner_dim,input_dim)
     def forward(self,features:Tensor):
